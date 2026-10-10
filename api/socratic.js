@@ -20,14 +20,14 @@ export default async function handler(req,res){
  // SHA-256 anonymizes the IP within the Redis key; entries expire after 60s.
  const crypto=await import('node:crypto');
  const hashed=crypto.createHash('sha256').update(ip).digest('hex');
- const bucket='socratic:v1:'+hashed+':'+Math.floor(Date.now()/60000);
+ const bucket='socratic:v1:'+hashed+':'+Math.floor(Date.now()/60000);\n const globalBucket='socratic:daily:'+new Date().toISOString().slice(0,10);
  const limiterUrl=process.env.UPSTASH_REDIS_REST_URL.replace(/[/]+$/,'')+'/pipeline';
  try{
- const limitResp=await fetch(limiterUrl,{method:'POST',headers:{Authorization:'Bearer '+process.env.UPSTASH_REDIS_REST_TOKEN,'Content-Type':'application/json'},body:JSON.stringify([['INCR',bucket],['EXPIRE',bucket,90]]),signal:AbortSignal.timeout(3000)});
+ const limitResp=await fetch(limiterUrl,{method:'POST',headers:{Authorization:'Bearer '+process.env.UPSTASH_REDIS_REST_TOKEN,'Content-Type':'application/json'},body:JSON.stringify([['INCR',bucket],['EXPIRE',bucket,90],['INCR',globalBucket],['EXPIRE',globalBucket,172800]]),signal:AbortSignal.timeout(3000)});
  if(!limitResp.ok)throw Error('limiter error');
  const limitData=await limitResp.json();
  const count=Number(limitData?.[0]?.result);
- if(!Number.isFinite(count))throw Error('limiter unavailable');
+ const dailyCount=Number(limitData?.[2]?.result);\n if(!Number.isFinite(count)||!Number.isFinite(dailyCount))throw Error('limiter unavailable');\n if(dailyCount>60)return res.status(429).json({error:'Daily AI question budget reached. Continue in guided mode.'});
  if(count>4)return res.status(429).json({error:'Usage limit reached. Continue in guided mode.'});
  }catch{return res.status(503).json({error:'Live AI protection is unavailable. Continue in guided mode.'});}
  const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);
