@@ -17,3 +17,7 @@ Book, branding and workshop materials: https://drive.google.com/drive/folders/1z
 
 ## Product status
 Currently a prototype: no real AI backend, multiplayer, payment processing or user accounts. Keep API keys and private participant data off static pages.
+
+## Deployment verification
+
+Vercel's linked project is `strategy-advantage-lab` under Studio33. This documentation-only commit confirms automatic deployment from GitHub `main` without changing the visitor experience.
