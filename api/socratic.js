@@ -21,7 +21,7 @@ export default async function handler(req,res){
  const crypto=await import('node:crypto');
  const hashed=crypto.createHash('sha256').update(ip).digest('hex');
  const bucket='socratic:v1:'+hashed+':'+Math.floor(Date.now()/60000);
- const limiterUrl=process.env.UPSTASH_REDIS_REST_URL.replace(/\\/$/,'')+'/pipeline';
+ const limiterUrl=process.env.UPSTASH_REDIS_REST_URL.replace(/[/]+$/,'')+'/pipeline';
  try{
  const limitResp=await fetch(limiterUrl,{method:'POST',headers:{Authorization:'Bearer '+process.env.UPSTASH_REDIS_REST_TOKEN,'Content-Type':'application/json'},body:JSON.stringify([['INCR',bucket],['EXPIRE',bucket,90]]),signal:AbortSignal.timeout(3000)});
  if(!limitResp.ok)throw Error('limiter error');
